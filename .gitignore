@@ -1,0 +1,8 @@
+.vs/
+vk-test-api.sln
+vk-test-api.csproj.user
+
+appsettings.json
+
+bin/
+obj/
