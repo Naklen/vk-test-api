@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using vk_test_api.Models;
 using vk_test_api.Utils;
 
@@ -7,13 +8,15 @@ namespace vk_test_api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UsersController : ControllerBase
+public class UserController : ControllerBase
 {
     private readonly ApiContext _db;
+    private readonly IMemoryCache _cache;
 
-    public UsersController(ApiContext context)
+    public UserController(ApiContext context, IMemoryCache cache)
     {
         _db = context;
+        _cache = cache;
     }
 
     // GET: api/Users
@@ -43,38 +46,7 @@ public class UsersController : ControllerBase
         }
 
         return user;
-    }
-
-    // PUT: api/Users/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutUser(int id, User user)
-    {
-        if (id != user.Id)
-        {
-            return BadRequest();
-        }
-
-        _db.Entry(user).State = EntityState.Modified;
-
-        try
-        {
-            await _db.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!UserExists(id))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        return NoContent();
-    }
+    }    
 
     // POST: api/Users
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -82,17 +54,26 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<User>> PostUser(NewUserData newUserData)
     {
         if (_db.Users == null)
-        {
             return Problem("Entity set 'ApiContext.Users'  is null.");
-        }
-        User newUser = new()
-        {
-            Login = newUserData.Login,
-            Password = newUserData.Password,
-            CreatedDate = DateTime.UtcNow,
-            UserGroupId = newUserData.IsAdmin ? (int)UserGroupCodes.Admin : (int)UserGroupCodes.User,
-            UserStateId = (int)UserStateCodes.Active
-        };
+
+        var lastRequestTime = _cache.Get<DateTimeOffset?>(newUserData.Login);
+        if (lastRequestTime.HasValue && DateTimeOffset.Now - lastRequestTime < TimeSpan.FromSeconds(5))
+            return BadRequest($"To many requests with login {newUserData.Login}");
+
+        _cache.Set(newUserData.Login, DateTimeOffset.Now, TimeSpan.FromSeconds(5));
+
+        if (newUserData.IsAdmin && _db.Users.FirstOrDefault(u => u.UserGroup.Code == UserGroupCodes.Admin.ToString() &&
+        u.UserState.Code == UserStateCodes.Active.ToString()) != null)
+            return BadRequest("Active admin user already exist");
+
+            User newUser = new()
+            {
+                Login = newUserData.Login,
+                Password = newUserData.Password,
+                CreatedDate = DateTime.UtcNow,
+                UserGroupId = newUserData.IsAdmin ? (int)UserGroupCodes.Admin : (int)UserGroupCodes.User,
+                UserStateId = (int)UserStateCodes.Active
+            };
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
 
@@ -113,7 +94,11 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        _db.Users.Remove(user);
+        if (user.UserStateId == (int)UserStateCodes.Blocked)
+            return BadRequest($"User {user.Login} already blocked");
+
+        user.UserStateId = (int)UserStateCodes.Blocked;
+        _db.Users.Update(user);
         await _db.SaveChangesAsync();
 
         return NoContent();

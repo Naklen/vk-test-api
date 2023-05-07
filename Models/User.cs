@@ -2,6 +2,7 @@
 
 namespace vk_test_api.Models;
 
+[Table("users")]
 public class User
 {
     public int Id { get; set; }

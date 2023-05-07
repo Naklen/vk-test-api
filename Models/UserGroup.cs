@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace vk_test_api.Models;
 
+[Table("user_groups")]
 public class UserGroup
 {
     public int Id { get; set; }

@@ -13,6 +13,8 @@ builder.Services.AddSwaggerGen();
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApiContext>(options => options.UseNpgsql(connection));
 
+builder.Services.AddMemoryCache();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
