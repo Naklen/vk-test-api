@@ -46,7 +46,19 @@ public class UserController : ControllerBase
         }
 
         return user;
-    }    
+    }
+
+    [HttpGet("paginate")]
+    public async Task<ActionResult<IEnumerable<User>>> GetPaginatedUsers(int limit, int offset)
+    {
+        if (_db.Users == null)
+        {
+            return NotFound();
+        }
+        if (offset < 0 || limit < 0)
+            return BadRequest("Wrong parameters");
+        return await _db.Users.Skip(offset).Take(limit).Include(u => u.UserGroup).Include(u => u.UserState).ToListAsync();
+    }
 
     // POST: api/Users
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
