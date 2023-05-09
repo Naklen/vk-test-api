@@ -1,5 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using vk_test_api.Models;
 using vk_test_api.Utils;
@@ -8,7 +7,6 @@ namespace vk_test_api;
 
 public class ApiContext : DbContext
 {
-    const bool NeedToSample = true;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<UserGroup> UserGroups { get; set; } = null!;
     public DbSet<UserState> UserStates { get; set; } = null!;
@@ -34,7 +32,7 @@ public class ApiContext : DbContext
             var JsonSample = JArray.Parse(File.ReadAllText(@".\dataSample.json"));
             var sample = new List<User>();
             var i = 1;
-            foreach (JObject item in JsonSample)
+            foreach (JObject item in JsonSample.Cast<JObject>())
             {
                 sample.Add(new User
                 {

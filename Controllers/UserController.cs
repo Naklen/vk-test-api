@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using vk_test_api.Models;
@@ -8,6 +9,7 @@ namespace vk_test_api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly ApiContext _db;
@@ -66,7 +68,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<User>> PostUser(NewUserData newUserData)
     {
         if (_db.Users == null)
-            return Problem("Entity set 'ApiContext.Users'  is null.");
+            return Problem("Entity set 'ApiContext.Users' is null.");
 
         var lastRequestTime = _cache.Get<DateTimeOffset?>(newUserData.Login);
         if (lastRequestTime.HasValue && DateTimeOffset.Now - lastRequestTime < TimeSpan.FromSeconds(5))
@@ -78,14 +80,14 @@ public class UserController : ControllerBase
         u.UserState.Code == UserStateCodes.Active.ToString()) != null)
             return BadRequest("Active admin user already exist");
 
-            User newUser = new()
-            {
-                Login = newUserData.Login,
-                Password = newUserData.Password,
-                CreatedDate = DateTime.UtcNow,
-                UserGroupId = newUserData.IsAdmin ? (int)UserGroupCodes.Admin : (int)UserGroupCodes.User,
-                UserStateId = (int)UserStateCodes.Active
-            };
+        User newUser = new()
+        {
+            Login = newUserData.Login,
+            Password = newUserData.Password,
+            CreatedDate = DateTime.UtcNow,
+            UserGroupId = newUserData.IsAdmin ? (int)UserGroupCodes.Admin : (int)UserGroupCodes.User,
+            UserStateId = (int)UserStateCodes.Active
+        };
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
 
@@ -114,10 +116,5 @@ public class UserController : ControllerBase
         await _db.SaveChangesAsync();
 
         return NoContent();
-    }
-
-    private bool UserExists(int id)
-    {
-        return (_db.Users?.Any(e => e.Id == id)).GetValueOrDefault();
     }
 }
