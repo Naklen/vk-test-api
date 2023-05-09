@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="vk-test-api.Tests\**" />
+    <Content Remove="vk-test-api.Tests\**" />
+    <EmbeddedResource Remove="vk-test-api.Tests\**" />
+    <None Remove="vk-test-api.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="appsettings_template.Development.json" />
   </ItemGroup>
 

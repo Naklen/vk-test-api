@@ -14,7 +14,7 @@ builder.Services.AddSwaggerGen();
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApiContext>(options => options.UseNpgsql(connection));
 
-builder.Services.AddMemoryCache();
+builder.Services.AddMemoryCache(options => options.ExpirationScanFrequency = TimeSpan.FromSeconds(5));
 
 builder.Services.AddScoped<AuthenticationEvents>();
 builder.Services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme).
