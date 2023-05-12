@@ -21,7 +21,6 @@ public class UserController : ControllerBase
         _cache = cache;
     }
 
-    // GET: api/Users
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
@@ -32,7 +31,6 @@ public class UserController : ControllerBase
         return await _db.Users.Include(u => u.UserGroup).Include(u => u.UserState).ToListAsync();
     }
 
-    // GET: api/Users/5
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
@@ -61,9 +59,7 @@ public class UserController : ControllerBase
             return BadRequest("Wrong parameters");
         return await _db.Users.Skip(offset).Take(limit).Include(u => u.UserGroup).Include(u => u.UserState).ToListAsync();
     }
-
-    // POST: api/Users
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    
     [HttpPost]
     public async Task<ActionResult<User>> PostUser(NewUserData newUserData)
     {
@@ -94,7 +90,6 @@ public class UserController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/Users/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
